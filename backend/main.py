@@ -5,6 +5,8 @@ from tortoise import fields
 from tortoise.contrib.fastapi import register_tortoise
 from tortoise.contrib.pydantic import pydantic_model_creator
 from tortoise.models import Model
+from pydantic import RootModel
+
 
 app = FastAPI()
 
@@ -12,16 +14,17 @@ class Task(BaseModel):
     id: str
     content: str
 
-class Tasks(BaseModel):
-    __root__: dict[str, Task]
-
 class Column(BaseModel):
     id: str
     title: str
     taskIds : list
 
-class Columns(BaseModel):
-    __root__: dict[str, Column]
+class Tasks(RootModel[dict[str, Task]]):
+    pass
+
+class Columns(RootModel[dict[str, Column]]):
+    pass
+
 
 class Board(BaseModel):
     tasks: Tasks
@@ -34,6 +37,8 @@ class User(Model):
     password = fields.CharField(200)
     board = fields.JSONField(default={"tasks": {}, "columns": {}, "columnOrder": []})
 
+User_Pydantic = pydantic_model_creator(User, name="User")
+UserIn_Pydantic = pydantic_model_creator(User, name="UserIn", exclude_readonly=True, exclude=["board",])
 
 origins = [
     "http://localhost:3000",  # React development server
